@@ -1,41 +1,51 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
-const express = require('express');
 const qrcode = require('qrcode');
+const express = require('express');
+const fs = require('fs');
+
 const app = express();
-const port = process.env.PORT || 3000;
+let qrCodeSvg = 'QR not generated yet';
 
 const client = new Client({
-    authStrategy: new LocalAuth(),
-    puppeteer: { headless: true, args: ['--no-sandbox'] }
+    authStrategy: new LocalAuth({ clientId: "bot" }),
+    puppeteer: {
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    }
 });
 
-let qrCode = null;
-
-client.on('qr', (qr) => {
-    qrcode.toDataURL(qr, (err, url) => {
-        qrCode = url;
-        console.log('QR RECEIVED');
-    });
+client.on('qr', async (qr) => {
+    console.log('QR RECEIVED');
+    qrCodeSvg = await qrcode.toDataURL(qr);
 });
 
 client.on('ready', () => {
-    console.log('WhatsApp client is ready!');
+    console.log('Client is ready!');
+});
+
+client.on('authenticated', () => {
+    console.log('Authenticated');
+});
+
+client.on('auth_failure', msg => {
+    console.error('Auth failure', msg);
+});
+
+client.on('disconnected', () => {
+    console.log('Client was logged out');
 });
 
 client.initialize();
 
 app.get('/', (req, res) => {
-    res.send('WhatsApp Status Bot is running.');
+    res.send(`<h2>Visit <a href="/qr">/qr</a> to scan</h2>`);
 });
 
 app.get('/qr', (req, res) => {
-    if (qrCode) {
-        res.send(`<img src="${qrCode}" />`);
-    } else {
-        res.send('QR Code not generated yet. Please refresh in a moment.');
-    }
+    res.send(`<h2>Scan QR:</h2><img src="${qrCodeSvg}" style="width:300px;"><br><p>Reload if blank.</p>`);
 });
 
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+// ✅ Heroku port fix
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
 });
