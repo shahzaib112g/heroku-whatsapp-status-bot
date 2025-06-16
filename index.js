@@ -6,8 +6,18 @@ const fs = require('fs');
 const app = express();
 let qrCodeSvg = 'QR not generated yet';
 
+// ✅ Ensure session directory exists (for Heroku runtime)
+const sessionDir = './wweb-session';
+if (!fs.existsSync(sessionDir)) {
+    fs.mkdirSync(sessionDir);
+}
+
+// ✅ Initialize WhatsApp Client
 const client = new Client({
-    authStrategy: new LocalAuth({ clientId: "bot" }),
+    authStrategy: new LocalAuth({ 
+        clientId: "bot",
+        dataPath: sessionDir
+    }),
     puppeteer: {
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
     }
@@ -19,23 +29,24 @@ client.on('qr', async (qr) => {
 });
 
 client.on('ready', () => {
-    console.log('Client is ready!');
+    console.log('✅ WhatsApp client is ready!');
 });
 
 client.on('authenticated', () => {
-    console.log('Authenticated');
+    console.log('🔐 Client authenticated');
 });
 
 client.on('auth_failure', msg => {
-    console.error('Auth failure', msg);
+    console.error('❌ Auth failure', msg);
 });
 
 client.on('disconnected', () => {
-    console.log('Client was logged out');
+    console.log('🚫 Client disconnected');
 });
 
 client.initialize();
 
+// ✅ Express routes
 app.get('/', (req, res) => {
     res.send(`<h2>Visit <a href="/qr">/qr</a> to scan</h2>`);
 });
@@ -47,5 +58,5 @@ app.get('/qr', (req, res) => {
 // ✅ Heroku port fix
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
+    console.log(`🌐 Server running at http://localhost:${PORT}`);
 });
