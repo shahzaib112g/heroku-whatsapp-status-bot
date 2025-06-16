@@ -1,0 +1,13 @@
+{
+  "name": "WhatsApp Status Bot",
+  "description": "A simple bot that views status via WhatsApp Web on Heroku",
+  "repository": "https://github.com/shahzaib112g/heroku-whatsapp-status-bot",
+  "keywords": ["whatsapp", "bot", "heroku"],
+  "env": {},
+  "addons": [],
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ]
+}
